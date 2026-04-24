@@ -7,12 +7,16 @@ const Booking = require('../models/Booking');
 // GET /api/parking – list approved spaces with filters
 exports.getSpaces = async (req, res, next) => {
   try {
-    const { vehicleType, minPrice, maxPrice, lat, lng, radius = 10, search } = req.query;
+    const { vehicleType, minPrice, maxPrice, lat, lng, radius = 10, search, limit } = req.query;
 
     let filter = { status: 'approved' };
 
     // Vehicle type filter
     if (vehicleType) filter.vehicleTypes = { $in: [vehicleType, 'both'] };
+
+    // Hackathon Features
+    if (req.query.isEVCharging === 'true') filter.isEVCharging = true;
+    if (req.query.isSecurityGuard === 'true') filter.isSecurityGuard = true;
 
     // Price range filter
     if (minPrice || maxPrice) {
@@ -38,15 +42,17 @@ exports.getSpaces = async (req, res, next) => {
         location: {
           $near: {
             $geometry: { type: 'Point', coordinates: [Number(lng), Number(lat)] },
-            $maxDistance: Number(radius) * 1000, // convert km to meters
+            $maxDistance: Number(radius) * 1000,
           },
         },
-      }).populate('host', 'name avatar');
+      })
+        .populate('host', 'name avatar')
+        .limit(Number(limit) || 50);
     } else {
       spaces = await ParkingSpace.find(filter)
         .populate('host', 'name avatar')
         .sort('-createdAt')
-        .limit(50);
+        .limit(Number(limit) || 50);
     }
 
     res.json({ success: true, count: spaces.length, spaces });

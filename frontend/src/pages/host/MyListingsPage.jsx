@@ -49,12 +49,12 @@ export default function MyListingsPage() {
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => <div key={i} className="card h-64 animate-pulse" />)}
+            {[...Array(3)].map((_, i) => <div key={i} className="card h-64 animate-pulse border-slate-100" />)}
           </div>
         ) : spaces.length === 0 ? (
-          <div className="card text-center py-20 text-white/40">
-            <p className="text-lg mb-4">You haven't listed any spaces yet.</p>
-            <Link to="/host/add-listing" className="btn-secondary inline-block">List your first space</Link>
+          <div className="card text-center py-24 bg-slate-50 border border-dashed border-slate-200 rounded-3xl">
+            <p className="text-slate-500 font-bold text-lg mb-6 tracking-tight">You haven't listed any spaces yet.</p>
+            <Link to="/host/add-listing" className="btn-secondary py-3 px-8 text-xs font-black uppercase tracking-widest">List your first space</Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -65,10 +65,10 @@ export default function MyListingsPage() {
                 showStatus={true} 
                 actions={
                   <>
-                    <button className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10 transition-all text-white/60 hover:text-white">
+                    <button className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center hover:bg-slate-100 transition-all text-slate-400 hover:text-indigo-600 shadow-sm">
                       <Edit className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleDelete(space._id)} className="w-9 h-9 rounded-lg bg-red-500/10 flex items-center justify-center hover:bg-red-500/20 transition-all text-red-500">
+                    <button onClick={() => handleDelete(space._id)} className="w-10 h-10 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center hover:bg-red-100 transition-all text-red-500 shadow-sm ml-2">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </>

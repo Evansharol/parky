@@ -2,9 +2,10 @@
  * api/axios.js – Configured Axios instance with JWT interceptor
  */
 import axios from 'axios';
+import config from '../config';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: `${config.API_URL}/api`,
   headers: { 'Content-Type': 'application/json' },
 });
 

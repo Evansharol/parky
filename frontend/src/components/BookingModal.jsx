@@ -45,47 +45,47 @@ export default function BookingModal({ space, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="card w-full max-w-md animate-slide-up">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+      <div className="card w-full max-w-md animate-slide-up border-slate-100 shadow-2xl bg-white p-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-xl font-bold">Book Parking</h2>
-            <p className="text-white/50 text-sm">{space.title}</p>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tighter">Book Parking</h2>
+            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mt-1">{space.title}</p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-all">
-            <X className="w-5 h-5 text-white/60" />
+          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-all shadow-sm">
+            <X className="w-5 h-5 text-slate-400" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* Date/time pickers */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="input-label flex items-center gap-1.5"><Clock className="w-3 h-3" /> Start</label>
-              <input type="datetime-local" className="input text-sm"
+              <label className="input-label text-slate-500 font-bold uppercase tracking-widest text-[10px] flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Start Time</label>
+              <input type="datetime-local" className="input text-sm shadow-sm"
                 value={form.startTime} onChange={e => setForm({ ...form, startTime: e.target.value })} required />
             </div>
             <div>
-              <label className="input-label flex items-center gap-1.5"><Clock className="w-3 h-3" /> End</label>
-              <input type="datetime-local" className="input text-sm"
+              <label className="input-label text-slate-500 font-bold uppercase tracking-widest text-[10px] flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> End Time</label>
+              <input type="datetime-local" className="input text-sm shadow-sm"
                 value={form.endTime} onChange={e => setForm({ ...form, endTime: e.target.value })} required />
             </div>
           </div>
 
           {/* Vehicle type */}
           <div>
-            <label className="input-label">Vehicle Type</label>
-            <div className="grid grid-cols-2 gap-3">
+            <label className="input-label text-slate-500 font-bold uppercase tracking-widest text-[10px]">Select Vehicle Type</label>
+            <div className="grid grid-cols-2 gap-4">
               {['car', 'bike'].map(v => (
                 <button type="button" key={v}
                   onClick={() => setForm({ ...form, vehicleType: v })}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-all font-medium text-sm
+                  className={`flex flex-col items-center gap-2 py-4 rounded-2xl border-2 transition-all shadow-sm
                     ${form.vehicleType === v
-                      ? 'border-brand-500 bg-brand-500/20 text-brand-300'
-                      : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'}`}>
-                  {v === 'car' ? <Car className="w-4 h-4" /> : <Bike className="w-4 h-4" />}
-                  {v.charAt(0).toUpperCase() + v.slice(1)}
+                      ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                      : 'border-slate-100 bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>
+                  {v === 'car' ? <Car className="w-6 h-6" /> : <Bike className="w-6 h-6" />}
+                  <span className="text-[10px] font-black uppercase tracking-widest">{v}</span>
                 </button>
               ))}
             </div>
@@ -93,27 +93,27 @@ export default function BookingModal({ space, onClose, onSuccess }) {
 
           {/* Vehicle number */}
           <div>
-            <label className="input-label">Vehicle Number</label>
-            <input className="input" placeholder="e.g. MH 01 AB 1234" value={form.vehicleNumber}
-              onChange={e => setForm({ ...form, vehicleNumber: e.target.value })} required />
+            <label className="input-label text-slate-500 font-bold uppercase tracking-widest text-[10px]">Vehicle Number</label>
+            <input className="input shadow-sm uppercase tracking-widest" placeholder="e.g. MH 01 AB 1234" value={form.vehicleNumber}
+              onChange={e => setForm({ ...form, vehicleNumber: e.target.value.toUpperCase() })} required />
           </div>
 
           {/* Summary */}
           {totalHours > 0 && (
-            <div className="glass rounded-xl p-4 flex items-center justify-between">
-              <div className="text-sm text-white/60">
-                <p>{totalHours} hour{totalHours !== 1 ? 's' : ''} × ₹{space.pricePerHour}/hr</p>
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex items-center justify-between shadow-sm">
+              <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                <p>{totalHours} hour{totalHours !== 1 ? 's' : ''} × ₹{space.pricePerHour}</p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-white/40">Total</p>
-                <p className="text-xl font-bold text-accent-green">₹{totalAmount}</p>
+                <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em]">Total Amount</p>
+                <p className="text-2xl font-black text-emerald-600 tracking-tighter">₹{totalAmount}</p>
               </div>
             </div>
           )}
 
-          <button type="submit" className="btn-primary flex items-center justify-center gap-2" disabled={loading}>
-            <CreditCard className="w-4 h-4" />
-            {loading ? 'Sending request...' : 'Confirm Booking (Pay on Arrival)'}
+          <button type="submit" className="btn-primary py-4 flex items-center justify-center gap-3 mt-4 text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-indigo-100" disabled={loading}>
+            <CreditCard className="w-5 h-5" />
+            {loading ? 'Processing...' : 'Confirm Reservation'}
           </button>
         </form>
       </div>

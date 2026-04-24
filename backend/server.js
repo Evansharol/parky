@@ -28,14 +28,18 @@ connectDB();
 const app = express();
 
 // ── Middleware ──────────────────────────────────────────────────────────────
-app.use(helmet());                        // Security headers
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
 app.use(cors({ origin: '*' }));           // Allow all origins in dev
 app.use(morgan('dev'));                   // Request logging
 app.use(express.json());                  // Parse JSON bodies
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded images as static files
+// Serve uploaded and static images as static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 // ── API Routes ──────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);

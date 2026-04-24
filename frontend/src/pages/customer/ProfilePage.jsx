@@ -28,48 +28,50 @@ export default function ProfilePage() {
       <h1 className="section-title mb-1">My Profile</h1>
       <p className="section-sub mb-8">Manage your account details</p>
 
-      <div className="card">
+      <div className="card border-slate-100 shadow-lg shadow-slate-50 bg-white p-8">
         {/* Avatar */}
-        <div className="flex items-center gap-5 mb-8 pb-6 border-b border-white/10">
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 flex items-center justify-center text-3xl font-black shadow-glow">
+        <div className="flex items-center gap-6 mb-10 pb-8 border-b border-slate-100">
+          <div className="w-24 h-24 rounded-3xl bg-indigo-600 flex items-center justify-center text-4xl font-black text-white shadow-xl shadow-indigo-100 border-4 border-white">
             {user?.name?.charAt(0).toUpperCase()}
           </div>
           <div>
-            <p className="text-xl font-bold">{user?.name}</p>
-            <p className="text-white/40 text-sm capitalize">{user?.role} account</p>
-            <span className={user?.isVerified ? 'badge-green mt-1' : 'badge-yellow mt-1'}>
-              {user?.isVerified ? '✓ Verified' : 'Unverified'}
-            </span>
+            <p className="text-2xl font-black text-slate-900 tracking-tighter">{user?.name}</p>
+            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mt-1">{user?.role} account</p>
+            <div className="mt-3">
+              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${user?.isVerified ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
+                {user?.isVerified ? '✓ Verified' : 'Unverified'}
+              </span>
+            </div>
           </div>
         </div>
 
-        <form onSubmit={handleSave} className="flex flex-col gap-4">
+        <form onSubmit={handleSave} className="flex flex-col gap-6">
           <div>
-            <label className="input-label">Full Name</label>
+            <label className="input-label text-slate-500 font-bold uppercase tracking-widest text-[10px]">Full Name</label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-              <input className="input pl-10" value={form.name}
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input className="input pl-11 py-3.5 shadow-sm" value={form.name}
                 onChange={e => setForm({ ...form, name: e.target.value })} required />
             </div>
           </div>
           <div>
-            <label className="input-label">Email (read-only)</label>
+            <label className="input-label text-slate-500 font-bold uppercase tracking-widest text-[10px]">Email Address (Primary)</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-              <input className="input pl-10 opacity-50 cursor-not-allowed" value={user?.email} readOnly />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input className="input pl-11 py-3.5 bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed" value={user?.email} readOnly />
             </div>
           </div>
           <div>
-            <label className="input-label">Phone</label>
+            <label className="input-label text-slate-500 font-bold uppercase tracking-widest text-[10px]">Phone Number</label>
             <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-              <input className="input pl-10" placeholder="+91 98765 43210" value={form.phone}
+              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input className="input pl-11 py-3.5 shadow-sm" placeholder="+91 98765 43210" value={form.phone}
                 onChange={e => setForm({ ...form, phone: e.target.value })} />
             </div>
           </div>
-          <button type="submit" className="btn-primary flex items-center justify-center gap-2 mt-2" disabled={loading}>
-            <Save className="w-4 h-4" />
-            {loading ? 'Saving…' : 'Save Changes'}
+          <button type="submit" className="btn-primary py-4 flex items-center justify-center gap-3 mt-4 text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-indigo-100" disabled={loading}>
+            <Save className="w-5 h-5" />
+            {loading ? 'Saving Changes…' : 'Save Profile Changes'}
           </button>
         </form>
       </div>

@@ -119,14 +119,16 @@ function AppRoutes() {
         position="top-right"
         toastOptions={{
           style: {
-            background: '#0d1528',
-            color: '#fff',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '12px',
+            background: '#ffffff',
+            color: '#0f172a',
+            border: '1px solid #f1f5f9',
+            borderRadius: '16px',
             fontSize: '14px',
+            fontWeight: '600',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.05)',
           },
-          success: { iconTheme: { primary: '#22d3a6', secondary: '#0d1528' } },
-          error: { iconTheme: { primary: '#ef4444', secondary: '#0d1528' } },
+          success: { iconTheme: { primary: '#10b981', secondary: '#ffffff' } },
+          error: { iconTheme: { primary: '#ef4444', secondary: '#ffffff' } },
         }}
       />
     </>

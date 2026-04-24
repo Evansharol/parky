@@ -3,36 +3,109 @@
  */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, MapPin, Car, Bike, Star, Shield, Zap, TrendingUp } from 'lucide-react';
+import { Search, MapPin, Car, Bike, Star, Shield, Zap, TrendingUp, Navigation } from 'lucide-react';
 import { getSpaces, smartSearch } from '../../api/index';
 import ParkingCard from '../../components/ParkingCard';
+import NearbyMapModal from '../../components/NearbyMapModal';
+import logo from '../../assets/logoparky.png';
+import park1 from '../../assets/park1.jpg';
+import park2 from '../../assets/park2.jpg';
+import park3 from '../../assets/park3.jpg';
+import park4 from '../../assets/park4.png';
 import toast from 'react-hot-toast';
 
 const STATS = [
-  { label: 'Parking Spaces', value: '2,400+', icon: MapPin, color: 'bg-brand-500/20 text-brand-400' },
-  { label: 'Happy Drivers', value: '18K+',   icon: Car,    color: 'bg-accent-green/20 text-accent-green' },
-  { label: 'Cities Covered', value: '35+',   icon: Zap,    color: 'bg-accent-orange/20 text-accent-orange' },
-  { label: 'Avg. Rating',    value: '4.8★',  icon: Star,   color: 'bg-accent-yellow/20 text-accent-yellow' },
+  { label: 'Parking Spaces', value: '2,400+', icon: MapPin, color: 'bg-indigo-50 text-indigo-600 border border-indigo-100' },
+  { label: 'Happy Drivers', value: '18K+',   icon: Car,    color: 'bg-emerald-50 text-emerald-600 border border-emerald-100' },
+  { label: 'Cities Covered', value: '35+',   icon: Zap,    color: 'bg-amber-50 text-amber-600 border border-amber-100' },
+  { label: 'Avg. Rating',    value: '4.8★',  icon: Star,   color: 'bg-amber-50 text-amber-600 border border-amber-100' },
 ];
 
 const FEATURES = [
-  { icon: MapPin, title: 'Find Instantly', desc: 'Discover verified parking near you with real-time availability.', color: 'text-brand-400' },
-  { icon: Shield, title: 'Safe & Secure',  desc: 'Every space is verified and reviewed by our trust & safety team.', color: 'text-accent-green' },
-  { icon: Zap,    title: 'Book in Seconds',desc: 'Reserve your slot in under 30 seconds. Pay on arrival, hassle-free.', color: 'text-accent-orange' },
-  { icon: TrendingUp, title: 'Earn as a Host', desc: 'List your driveway or garage and earn up to ₹15,000/month.', color: 'text-accent-purple' },
+  { icon: MapPin, title: 'Find Instantly', desc: 'Discover verified parking near you with real-time availability.', color: 'text-indigo-600' },
+  { icon: Shield, title: 'Safe & Secure',  desc: 'Every space is verified and reviewed by our trust & safety team.', color: 'text-emerald-600' },
+  { icon: Zap,    title: 'Book in Seconds',desc: 'Reserve your slot in under 30 seconds. Pay on arrival, hassle-free.', color: 'text-amber-600' },
+  { icon: TrendingUp, title: 'Earn as a Host', desc: 'List your driveway or garage and earn up to ₹15,000/month.', color: 'text-indigo-600' },
 ];
+
+const FEATURED_IMAGES = [park1, park2, park3, park4];
 
 export default function HomePage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [featured, setFeatured] = useState([]);
   const [loadingFeatured, setLoadingFeatured] = useState(true);
+  const [showMap, setShowMap] = useState(false);
+  const [calcSlots, setCalcSlots] = useState(5);
+  const [calcHours, setCalcHours] = useState(8);
+  const earnings = calcSlots * calcHours * 40 * 30; // 40 is avg price, 30 days
 
   useEffect(() => {
-    getSpaces({ limit: 6 })
-      .then(res => setFeatured(res.data.spaces || []))
-      .catch(() => {})
-      .finally(() => setLoadingFeatured(false));
+    let isMounted = true;
+
+    const loadFeatured = async (params = {}) => {
+      setLoadingFeatured(true);
+      try {
+        const res = await getSpaces({ limit: 3, ...params });
+        const spaces = (res.data.spaces || []).slice(0, 3).map((space, index) => ({
+          ...space,
+          featuredImage: space.images?.[0] || FEATURED_IMAGES[index % FEATURED_IMAGES.length],
+        }));
+        if (isMounted) setFeatured(spaces);
+      } catch (err) {
+        console.error("Error loading featured spaces:", err);
+      } finally {
+        if (isMounted) setLoadingFeatured(false);
+      }
+    };
+
+
+  const loadNearbyFeatured = async () => {
+      try {
+        if (!navigator.geolocation) {
+          await loadFeatured();
+          return;
+        }
+
+        await new Promise((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            async ({ coords }) => {
+              try {
+                await loadFeatured({ lat: coords.latitude, lng: coords.longitude, radius: 10 });
+              } catch {
+                try {
+                  await loadFeatured();
+                } catch {
+                  if (isMounted) setFeatured([]);
+                }
+              } finally {
+                resolve();
+              }
+            },
+            async () => {
+              try {
+                await loadFeatured();
+              } catch {
+                if (isMounted) setFeatured([]);
+              } finally {
+                resolve();
+              }
+            },
+            { enableHighAccuracy: true, timeout: 8000 }
+          );
+        });
+      } catch {
+        if (isMounted) setFeatured([]);
+      } finally {
+        if (isMounted) setLoadingFeatured(false);
+      }
+    };
+
+    loadNearbyFeatured();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleSearch = async (e) => {
@@ -51,19 +124,20 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
+      {/* Nearby map modal */}
+      {showMap && <NearbyMapModal onClose={() => setShowMap(false)} />}
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
         {/* Animated background */}
         <div className="absolute inset-0">
-          <div className="absolute top-20 left-1/4 w-72 h-72 bg-brand-600/25 rounded-full blur-3xl animate-pulse-slow" />
-          <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-accent-green/15 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1.5s' }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-800/20 rounded-full blur-3xl" />
+          <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-indigo-50 to-transparent" />
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
+
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full text-sm text-brand-300 border border-brand-500/30 mb-8 animate-fade-in">
-            <span className="w-2 h-2 rounded-full bg-accent-green animate-pulse" />
+          <div className="inline-flex items-center gap-2 bg-white border border-slate-200 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-wider text-indigo-600 mb-8 uppercase animate-subtle-fade shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             Now live in 35+ cities across India
           </div>
 
@@ -71,32 +145,60 @@ export default function HomePage() {
             Park Smarter,{' '}
             <span className="text-gradient">Not Harder</span>
           </h1>
-          <p className="text-xl text-white/60 mb-12 max-w-2xl mx-auto leading-relaxed animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          <p className="text-xl text-slate-500 mb-12 max-w-2xl mx-auto leading-relaxed animate-slide-in font-medium" style={{ animationDelay: '0.1s' }}>
             Airbnb for parking spaces. Find, book, and pay for private and public parking in seconds — or earn money by renting yours.
           </p>
 
           {/* Smart search bar */}
-          <form onSubmit={handleSearch} className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
-            <div className="flex items-center gap-3 glass-dark px-5 py-4 rounded-2xl border border-white/15 shadow-glass max-w-2xl mx-auto">
-              <Search className="w-5 h-5 text-brand-400 flex-shrink-0" />
+          <form onSubmit={handleSearch} className="animate-slide-in" style={{ animationDelay: '0.2s' }}>
+            <div className="flex items-center gap-3 bg-white border border-slate-200 shadow-xl px-5 py-3 rounded-2xl max-w-2xl mx-auto focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+              <Search className="w-5 h-5 text-slate-400 flex-shrink-0" />
               <input
                 type="text"
-                className="flex-1 bg-transparent text-white placeholder-white/40 outline-none text-base"
-                placeholder='Try "cheap bike parking near mall" or "car parking overnight"'
+                className="flex-1 bg-transparent text-slate-900 placeholder-slate-400 outline-none text-base font-bold"
+                placeholder='Try "cheap bike parking near mall"...'
                 value={query}
                 onChange={e => setQuery(e.target.value)}
               />
-              <button type="submit" className="btn-primary py-2.5 px-5 text-sm whitespace-nowrap">
+              {/* Near Me button */}
+              <button
+                type="button"
+                onClick={() => setShowMap(true)}
+                className="flex items-center gap-1.5 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-black text-[11px] uppercase tracking-wider py-2 px-3 rounded-lg transition-all whitespace-nowrap"
+                title="Find parking near my current location"
+              >
+                <Navigation className="w-3.5 h-3.5" />
+                Near Me
+              </button>
+              <button type="submit" className="btn-primary py-2 px-8 text-sm shadow-indigo-200">
                 Search
               </button>
             </div>
-            <div className="flex items-center justify-center gap-4 mt-4 text-xs text-white/30">
-              <span className="flex items-center gap-1"><Car className="w-3 h-3" /> Cars</span>
-              <span className="flex items-center gap-1"><Bike className="w-3 h-3" /> Bikes</span>
-              <span>•</span>
-              <span>AI-powered smart search</span>
-            </div>
           </form>
+
+          {/* Quick vehicle filters */}
+          <div className="flex flex-wrap items-center justify-center gap-4 mt-8 animate-slide-in" style={{ animationDelay: '0.3s' }}>
+            <button
+              onClick={() => navigate('/search?vehicleType=car')}
+              className="px-6 py-3 bg-white border border-slate-200 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-600 hover:border-indigo-500 hover:text-indigo-600 transition-all flex items-center gap-2.5 shadow-sm group"
+            >
+              <Car className="w-4 h-4 group-hover:scale-110 transition-transform" /> Cars
+            </button>
+            <button
+              onClick={() => navigate('/search?vehicleType=bike')}
+              className="px-6 py-3 bg-white border border-slate-200 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-600 hover:border-emerald-500 hover:text-emerald-600 transition-all flex items-center gap-2.5 shadow-sm group"
+            >
+              <Bike className="w-4 h-4 group-hover:scale-110 transition-transform" /> Bikes
+            </button>
+            <button
+              onClick={() => navigate('/search?isEVCharging=true')}
+              className="px-6 py-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-[11px] font-black uppercase tracking-widest text-emerald-700 hover:bg-emerald-100 transition-all flex items-center gap-2.5 shadow-sm group"
+            >
+              <Zap className="w-4 h-4 group-hover:scale-110 transition-transform text-emerald-500" /> 
+              Find EV Charging
+            </button>
+          </div>
+
         </div>
 
         {/* Floating card decorations */}
@@ -114,14 +216,14 @@ export default function HomePage() {
           </div>
         </div>
         <div className="hidden lg:block absolute right-12 top-1/2 animate-float" style={{ animationDelay: '2s' }}>
-          <div className="glass rounded-2xl px-4 py-3 shadow-glass text-sm">
+          <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-xl text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-brand-500/20 flex items-center justify-center">
-                <Star className="w-4 h-4 text-brand-400" />
+              <div className="w-8 h-8 rounded-xl bg-indigo-600/10 flex items-center justify-center">
+                <Star className="w-4 h-4 text-indigo-600" />
               </div>
               <div>
-                <p className="font-semibold text-xs">Booking confirmed!</p>
-                <p className="text-white/40 text-xs">Andheri West • 2 hrs</p>
+                <p className="font-bold text-xs text-slate-900">Booking confirmed!</p>
+                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Indiranagar • 2 hrs</p>
               </div>
             </div>
           </div>
@@ -132,12 +234,12 @@ export default function HomePage() {
       <section className="py-16 px-4">
         <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
           {STATS.map(({ label, value, icon: Icon, color }) => (
-            <div key={label} className="card text-center">
-              <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center mx-auto mb-3`}>
+            <div key={label} className="card text-center border-slate-100 shadow-sm">
+              <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center mx-auto mb-4`}>
                 <Icon className="w-6 h-6" />
               </div>
-              <p className="text-2xl font-black text-white">{value}</p>
-              <p className="text-white/50 text-sm mt-1">{label}</p>
+              <p className="text-3xl font-black text-slate-900 tracking-tighter">{value}</p>
+              <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">{label}</p>
             </div>
           ))}
         </div>
@@ -157,44 +259,96 @@ export default function HomePage() {
 
         {loadingFeatured ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="card h-64 animate-pulse">
-                <div className="h-44 bg-white/5 rounded-xl mb-3" />
-                <div className="h-4 bg-white/5 rounded w-3/4" />
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="card h-72 animate-pulse border-slate-100">
+                <div className="h-48 bg-slate-100 rounded-xl mb-4" />
+                <div className="h-4 bg-slate-100 rounded w-3/4" />
               </div>
             ))}
           </div>
         ) : featured.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featured.map(space => <ParkingCard key={space._id} space={space} />)}
+            {featured.slice(0, 3).map(space => (
+              <ParkingCard key={space._id} space={space} imageSrc={space.featuredImage} />
+            ))}
           </div>
         ) : (
-          <div className="text-center py-20 text-white/40">
-            <MapPin className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p>No listings yet. Be the first to add one!</p>
+          <div className="text-center py-24 bg-slate-50 border border-dashed border-slate-200 rounded-3xl">
+            <MapPin className="w-16 h-16 mx-auto mb-4 text-slate-300" />
+            <h3 className="text-xl font-bold text-slate-800 mb-2">No listings yet</h3>
+            <p className="text-slate-500 text-sm font-medium">Be the first to list your space in this area!</p>
           </div>
         )}
       </section>
 
-      {/* ── How it works ─────────────────────────────────────────────────── */}
-      <section className="py-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="section-title">Why Choose Parky?</h2>
-            <p className="section-sub">Everything you need, nothing you don't</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {FEATURES.map(({ icon: Icon, title, desc, color }) => (
-              <div key={title} className="card-hover flex items-start gap-4">
-                <div className={`w-12 h-12 rounded-xl glass flex items-center justify-center flex-shrink-0 ${color}`}>
-                  <Icon className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-white mb-1">{title}</h3>
-                  <p className="text-white/50 text-sm leading-relaxed">{desc}</p>
-                </div>
+      {/* ── Earnings Calculator (Hackathon Wow Feature) ──────────────────── */}
+      <section className="py-24 px-4 bg-slate-900 overflow-hidden relative">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px]" />
+        
+        <div className="max-w-6xl mx-auto relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <h2 className="text-4xl md:text-6xl font-black text-white mb-6 leading-tight tracking-tighter">
+                Turn your empty space into <span className="text-emerald-400">passive income</span>
+              </h2>
+              <p className="text-slate-400 text-lg mb-8 max-w-lg font-medium leading-relaxed">
+                Whether it's a spare driveway, a garage, or a commercial lot, Parky helps you monetize it with zero effort.
+              </p>
+              <div className="flex flex-col gap-4">
+                {[
+                  { title: 'Secure Payments', desc: 'Auto-credited to your bank weekly' },
+                  { title: 'Smart Pricing', desc: 'AI adjusts rates to maximize your profit' },
+                  { title: 'Full Control', desc: 'Choose when your space is available' }
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-4 items-start">
+                    <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-1">
+                      <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-white font-bold text-sm">{item.title}</h4>
+                      <p className="text-slate-500 text-xs">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 md:p-12 shadow-2xl">
+              <h3 className="text-2xl font-black text-white mb-8 flex items-center gap-3">
+                <Zap className="w-6 h-6 text-emerald-400" /> Earnings Calculator
+              </h3>
+              
+              <div className="space-y-10">
+                <div>
+                  <div className="flex justify-between mb-4">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Number of Slots</label>
+                    <span className="text-emerald-400 font-black">{calcSlots} Slots</span>
+                  </div>
+                  <input type="range" min="1" max="20" value={calcSlots} onChange={e => setCalcSlots(Number(e.target.value))} className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-400" />
+                </div>
+
+                <div>
+                  <div className="flex justify-between mb-4">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Hours occupied / day</label>
+                    <span className="text-emerald-400 font-black">{calcHours} Hours</span>
+                  </div>
+                  <input type="range" min="1" max="24" value={calcHours} onChange={e => setCalcHours(Number(e.target.value))} className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-400" />
+                </div>
+
+                <div className="pt-6 border-t border-white/10">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 text-center">Estimated Monthly Earnings</p>
+                  <div className="text-center">
+                    <span className="text-5xl md:text-7xl font-black text-white tracking-tighter">₹{earnings.toLocaleString()}</span>
+                    <span className="text-emerald-400 text-lg font-bold ml-2">/mo*</span>
+                  </div>
+                </div>
+
+                <button onClick={() => navigate('/register')} className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-900 py-5 rounded-2xl font-black tracking-widest uppercase text-xs transition-all shadow-lg shadow-emerald-500/20">
+                  Start Listing Your Space
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -202,14 +356,14 @@ export default function HomePage() {
       {/* ── CTA ──────────────────────────────────────────────────────────── */}
       <section className="py-20 px-4">
         <div className="max-w-4xl mx-auto">
-          <div className="relative card overflow-hidden text-center">
-            <div className="absolute inset-0 bg-gradient-to-br from-brand-700/40 to-accent-green/10 pointer-events-none" />
+          <div className="relative card overflow-hidden text-center border-indigo-100 bg-white shadow-2xl shadow-indigo-100">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-emerald-50/50 pointer-events-none" />
             <div className="relative z-10">
-              <h2 className="text-3xl md:text-4xl font-black mb-4">Have a parking space? <span className="text-gradient">Earn from it!</span></h2>
-              <p className="text-white/60 mb-8 max-w-xl mx-auto">List your garage, driveway or spare spot and earn passive income. Hosts on Parky earn an average of ₹8,000/month.</p>
+              <h2 className="text-3xl md:text-5xl font-black mb-6 text-slate-900 tracking-tighter">Have a parking space? <br/><span className="text-gradient">Earn from it today!</span></h2>
+              <p className="text-slate-500 mb-10 max-w-xl mx-auto font-medium">List your garage, driveway or spare spot and earn passive income. Hosts on Parky earn an average of ₹15,000/month.</p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button onClick={() => navigate('/register')} className="btn-primary">Start Hosting Today</button>
-                <button onClick={() => navigate('/search')} className="btn-secondary">Find Parking</button>
+                <button onClick={() => navigate('/register')} className="btn-primary py-4 px-10 rounded-xl shadow-indigo-200 font-black tracking-widest text-xs uppercase">Start Hosting Now</button>
+                <button onClick={() => navigate('/search')} className="btn-secondary py-4 px-10 rounded-xl font-black tracking-widest text-xs uppercase">Find Parking</button>
               </div>
             </div>
           </div>
@@ -217,12 +371,13 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 py-10 px-4 text-center">
-        <div className="flex items-center justify-center gap-2 mb-3">
-          <Car className="w-5 h-5 text-brand-400" />
-          <span className="text-lg font-bold text-gradient">Parky</span>
+      <footer className="border-t border-slate-200 bg-white py-16 px-4 text-center mt-20">
+        <div className="flex flex-col items-center justify-center gap-4 mb-6">
+          <img src={logo} alt="Parky Logo" className="w-12 h-12 object-contain" />
+          <span className="text-xl font-black text-slate-900 tracking-tighter">Parky</span>
         </div>
-        <p className="text-white/30 text-sm">© 2026 Parky. Airbnb for Parking Spaces.</p>
+        <p className="text-slate-400 text-[11px] font-bold uppercase tracking-[0.3em] mb-2">© 2026 Parky Platform</p>
+        <p className="text-slate-500 text-xs font-medium">Professional Parking Solutions for Modern Cities</p>
       </footer>
     </div>
   );

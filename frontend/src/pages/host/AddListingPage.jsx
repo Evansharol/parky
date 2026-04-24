@@ -95,39 +95,39 @@ export default function AddListingPage() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             {/* Basic Info */}
-            <div className="card">
-              <h2 className="font-bold mb-4 flex items-center gap-2"><Car className="w-5 h-5 text-brand-400" /> Basic Details</h2>
-              <div className="grid gap-4">
+            <div className="card border-slate-100 shadow-sm">
+              <h2 className="font-black text-slate-900 mb-6 flex items-center gap-3 tracking-tight"><Car className="w-5 h-5 text-indigo-600" /> Basic Details</h2>
+              <div className="grid gap-5">
                 <div>
-                  <label className="input-label">Title</label>
+                  <label className="input-label text-slate-500 font-bold uppercase tracking-widest text-[10px]">Listing Title</label>
                   <input className="input" placeholder="e.g. Safe Car Parking in Koramangala" 
                     value={form.title} onChange={e => setForm({...form, title: e.target.value})} required />
                 </div>
                 <div>
-                  <label className="input-label">Description</label>
-                  <textarea className="input min-h-[100px]" placeholder="Tell users about security, access, etc."
+                  <label className="input-label text-slate-500 font-bold uppercase tracking-widest text-[10px]">Description</label>
+                  <textarea className="input min-h-[120px]" placeholder="Tell users about security, access, etc."
                     value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
                 </div>
               </div>
             </div>
 
             {/* Location */}
-            <div className="card">
-              <h2 className="font-bold mb-4 flex items-center gap-2"><MapPin className="w-5 h-5 text-accent-green" /> Location</h2>
-              <div className="grid gap-4">
+            <div className="card border-slate-100 shadow-sm">
+              <h2 className="font-black text-slate-900 mb-6 flex items-center gap-3 tracking-tight"><MapPin className="w-5 h-5 text-emerald-600" /> Location Information</h2>
+              <div className="grid gap-5">
                 <div>
-                  <label className="input-label">Full Address</label>
+                  <label className="input-label text-slate-500 font-bold uppercase tracking-widest text-[10px]">Full Address</label>
                   <input className="input" placeholder="House no, Street, Area, City"
                     value={form.address} onChange={e => setForm({...form, address: e.target.value})} required />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-5">
                   <div>
-                    <label className="input-label">Latitude</label>
+                    <label className="input-label text-slate-500 font-bold uppercase tracking-widest text-[10px]">Latitude</label>
                     <input className="input" type="number" step="any" value={form.lat} 
                       onChange={e => setForm({...form, lat: parseFloat(e.target.value)})} required />
                   </div>
                   <div>
-                    <label className="input-label">Longitude</label>
+                    <label className="input-label text-slate-500 font-bold uppercase tracking-widest text-[10px]">Longitude</label>
                     <input className="input" type="number" step="any" value={form.lng}
                       onChange={e => setForm({...form, lng: parseFloat(e.target.value)})} required />
                   </div>
@@ -136,39 +136,41 @@ export default function AddListingPage() {
             </div>
 
             {/* Pricing & Vehicle */}
-            <div className="card">
-              <h2 className="font-bold mb-4 flex items-center gap-2"><IndianRupee className="w-5 h-5 text-accent-yellow" /> Pricing & Capacity</h2>
+            <div className="card border-slate-100 shadow-sm">
+              <h2 className="font-black text-slate-900 mb-6 flex items-center gap-3 tracking-tight"><IndianRupee className="w-5 h-5 text-amber-600" /> Pricing & Capacity</h2>
               <div className="grid gap-6">
                 <div>
-                  <label className="input-label">Price per Hour (₹)</label>
+                  <label className="input-label text-slate-500 font-bold uppercase tracking-widest text-[10px]">Price per Hour (₹)</label>
                   <div className="flex gap-3">
                     <input className="input" type="number" value={form.pricePerHour}
                       onChange={e => setForm({...form, pricePerHour: e.target.value})} required />
-                    <button type="button" onClick={handleSuggestPrice} className="btn-secondary whitespace-nowrap text-xs">
+                    <button type="button" onClick={handleSuggestPrice} className="bg-indigo-50 text-indigo-600 border border-indigo-100 hover:bg-indigo-100 py-3 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap shadow-sm">
                       AI Suggest
                     </button>
                   </div>
                   {pricingSuggestion && (
-                    <p className="text-xs text-accent-green mt-2">{pricingSuggestion.reasoning}</p>
+                    <p className="text-xs text-emerald-600 font-bold mt-3 bg-emerald-50 p-3 rounded-xl border border-emerald-100 italic">" {pricingSuggestion.reasoning} "</p>
                   )}
                 </div>
                 <div>
-                  <label className="input-label">Vehicle Types Allowed</label>
-                  <div className="flex gap-3">
+                  <label className="input-label text-slate-500 font-bold uppercase tracking-widest text-[10px]">Vehicle Types Allowed</label>
+                  <div className="flex gap-4">
                     <button type="button" onClick={() => toggleVehicleType('car')}
-                      className={`flex-1 py-3 rounded-xl border flex items-center justify-center gap-2 transition-all
-                        ${form.vehicleTypes.includes('car') ? 'border-brand-500 bg-brand-500/10 text-brand-300' : 'border-white/10 text-white/50'}`}>
-                      <Car className="w-4 h-4" /> Car
+                      className={`flex-1 py-4 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition-all shadow-sm
+                        ${form.vehicleTypes.includes('car') ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>
+                      <Car className="w-6 h-6" /> 
+                      <span className="text-[10px] font-black uppercase tracking-widest">Car</span>
                     </button>
                     <button type="button" onClick={() => toggleVehicleType('bike')}
-                      className={`flex-1 py-3 rounded-xl border flex items-center justify-center gap-2 transition-all
-                        ${form.vehicleTypes.includes('bike') ? 'border-accent-green bg-accent-green/10 text-accent-green' : 'border-white/10 text-white/50'}`}>
-                      <Bike className="w-4 h-4" /> Bike
+                      className={`flex-1 py-4 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition-all shadow-sm
+                        ${form.vehicleTypes.includes('bike') ? 'border-emerald-600 bg-emerald-50 text-emerald-600' : 'border-slate-100 bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>
+                      <Bike className="w-6 h-6" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">Bike</span>
                     </button>
                   </div>
                 </div>
                 <div>
-                  <label className="input-label">Total Slots</label>
+                  <label className="input-label text-slate-500 font-bold uppercase tracking-widest text-[10px]">Total Available Slots</label>
                   <input className="input" type="number" min="1" value={form.totalSlots}
                     onChange={e => setForm({...form, totalSlots: parseInt(e.target.value)})} required />
                 </div>
@@ -176,24 +178,26 @@ export default function AddListingPage() {
             </div>
 
             {/* Images */}
-            <div className="card">
-              <h2 className="font-bold mb-4 flex items-center gap-2"><Upload className="w-5 h-5 text-accent-purple" /> Photos</h2>
-              <div className="flex flex-col gap-4">
+            <div className="card border-slate-100 shadow-sm">
+              <h2 className="font-black text-slate-900 mb-6 flex items-center gap-3 tracking-tight"><Upload className="w-5 h-5 text-indigo-600" /> Upload Photos</h2>
+              <div className="flex flex-col gap-5">
                 <input type="file" multiple accept="image/*" onChange={handleImageChange} className="hidden" id="image-upload" />
-                <label htmlFor="image-upload" className="w-full py-8 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 transition-all">
-                  <Upload className="w-8 h-8 text-white/20 mb-2" />
-                  <p className="text-sm font-medium">Click to upload photos</p>
-                  <p className="text-xs text-white/40">Min. 1 photo required for verification</p>
+                <label htmlFor="image-upload" className="w-full py-12 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center cursor-pointer bg-slate-50 hover:bg-slate-100 transition-all group">
+                  <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform mb-4">
+                    <Upload className="w-8 h-8 text-indigo-600" />
+                  </div>
+                  <p className="text-sm font-black text-slate-900 tracking-tight">Drop photos here or click to browse</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Min. 1 high-quality photo required</p>
                 </label>
                 {imagePreviews.length > 0 && (
-                  <div className="flex gap-2 overflow-x-auto pb-2">
+                  <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
                     {imagePreviews.map((src, i) => (
-                      <div key={i} className="relative w-20 h-20 flex-shrink-0">
-                        <img src={src} className="w-full h-full object-cover rounded-xl" />
+                      <div key={i} className="relative w-24 h-24 flex-shrink-0 group">
+                        <img src={src} className="w-full h-full object-cover rounded-2xl shadow-sm border border-slate-200" />
                         <button type="button" onClick={() => {
                           setImagePreviews(prev => prev.filter((_, idx) => idx !== i));
                           setImageFiles(prev => prev.filter((_, idx) => idx !== i));
-                        }} className="absolute -top-1 -right-1 bg-red-500 rounded-full p-0.5"><X className="w-3 h-3" /></button>
+                        }} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 shadow-lg group-hover:scale-110 transition-transform"><X className="w-3.5 h-3.5" /></button>
                       </div>
                     ))}
                   </div>

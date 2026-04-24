@@ -28,6 +28,9 @@ const ParkingSpaceSchema = new mongoose.Schema(
     },
     totalSlots: { type: Number, default: 1, min: 1 },
     availableSlots: { type: Number, default: 1, min: 0 },
+    // Features
+    isEVCharging: { type: Boolean, default: false },
+    isSecurityGuard: { type: Boolean, default: false },
     images: [{ type: String }], // array of image URLs
     timeSlots: [TimeSlotSchema],
     // Admin approval status

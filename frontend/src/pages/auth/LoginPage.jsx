@@ -4,7 +4,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Car, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import logo from '../../assets/logoparky.png';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
@@ -44,43 +45,41 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       {/* Background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-brand-600/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-accent-green/10 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-600/5 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-emerald-600/5 rounded-full blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-md animate-fade-in">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-brand-600 flex items-center justify-center mx-auto mb-4 shadow-glow">
-            <Car className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-gradient">Welcome back</h1>
-          <p className="text-white/50 mt-1">Sign in to your Parky account</p>
+          <img src={logo} alt="Parky Logo" className="w-16 h-16 object-contain mx-auto mb-4" />
+          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Welcome back</h1>
+          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em] mt-2">Sign in to your Parky account</p>
         </div>
 
         {/* Card */}
         <div className="card">
           {/* Demo buttons */}
           <div className="mb-6">
-            <p className="text-xs text-white/40 text-center mb-3">Quick demo login</p>
-            <div className="grid grid-cols-3 gap-2">
+            <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] text-center mb-4">Quick demo login</p>
+            <div className="grid grid-cols-3 gap-3">
               {['customer', 'host', 'admin'].map(role => (
                 <button key={role} type="button" onClick={() => fillDemo(role)}
-                  className="btn-secondary btn-sm text-xs capitalize">
+                  className="btn-secondary py-2 text-[10px] font-black uppercase tracking-widest">
                   {role}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="border-t border-white/10 mb-6" />
+          <div className="border-t border-slate-100 mb-8" />
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
               <label className="input-label">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                <input className="input pl-10" type="email" placeholder="you@example.com"
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input className="input pl-11" type="email" placeholder="you@example.com"
                   value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
               </div>
             </div>
@@ -88,12 +87,12 @@ export default function LoginPage() {
             <div>
               <label className="input-label">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                <input className="input pl-10 pr-10"
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input className="input pl-11 pr-11"
                   type={showPw ? 'text' : 'password'} placeholder="••••••••"
                   value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required />
                 <button type="button" onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors">
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors">
                   {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
@@ -109,9 +108,9 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="text-center text-white/50 text-sm mt-5">
+          <p className="text-center text-slate-500 text-sm mt-8 font-medium">
             Don't have an account?{' '}
-            <Link to="/register" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
+            <Link to="/register" className="text-indigo-600 hover:text-indigo-700 font-black uppercase tracking-wider transition-colors ml-1">
               Create one
             </Link>
           </p>

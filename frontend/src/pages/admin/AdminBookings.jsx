@@ -38,8 +38,8 @@ export default function AdminBookings() {
           </div>
           <div className="flex items-center gap-3">
             <button onClick={() => setParams({...params, flagged: !params.flagged})}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition-all
-                ${params.flagged ? 'bg-red-500/20 border-red-500 text-red-400 shadow-glow-sm' : 'glass border-white/10 text-white/50 hover:text-white'}`}>
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black border transition-all uppercase tracking-widest
+                ${params.flagged ? 'bg-red-600 border-red-500 text-white shadow-lg shadow-red-100' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}>
               <ShieldAlert className="w-4 h-4" /> AI Flagged Only
             </button>
             <select className="input text-xs py-2 h-auto" value={params.status} onChange={e => setParams({...params, status: e.target.value})}>
@@ -53,53 +53,53 @@ export default function AdminBookings() {
           </div>
         </div>
 
-        <div className="card overflow-hidden p-0">
+        <div className="card overflow-hidden p-0 border-slate-100 shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-white/5 text-xs font-bold text-white/50 uppercase tracking-wider">
+              <thead className="bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] border-b border-slate-100">
                 <tr>
-                  <th className="px-6 py-4">Customer</th>
-                  <th className="px-6 py-4">Parking Space</th>
-                  <th className="px-6 py-4">Date & Time</th>
-                  <th className="px-6 py-4">Amount</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Fraud Score</th>
+                  <th className="px-6 py-5">Customer</th>
+                  <th className="px-6 py-5">Parking Space</th>
+                  <th className="px-6 py-5">Date & Time</th>
+                  <th className="px-6 py-5">Amount</th>
+                  <th className="px-6 py-5">Status</th>
+                  <th className="px-6 py-5">Fraud Analysis</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-sm">
+              <tbody className="divide-y divide-slate-100 text-sm">
                 {loading ? (
                   [...Array(5)].map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      <td colSpan="6" className="px-6 py-6"><div className="h-4 bg-white/5 rounded w-full" /></td>
+                      <td colSpan="6" className="px-6 py-8"><div className="h-4 bg-slate-50 rounded w-full" /></td>
                     </tr>
                   ))
                 ) : bookings.length === 0 ? (
-                  <tr><td colSpan="6" className="px-6 py-10 text-center text-white/30">No bookings found</td></tr>
+                  <tr><td colSpan="6" className="px-6 py-20 text-center text-slate-300 font-bold uppercase tracking-widest text-xs">No bookings found</td></tr>
                 ) : (
                   bookings.map(b => (
-                    <tr key={b._id} className={`hover:bg-white/5 transition-all ${b.isFlagged ? 'bg-red-500/5' : ''}`}>
-                      <td className="px-6 py-4">
-                        <p className="font-semibold">{b.customer?.name}</p>
-                        <p className="text-xs text-white/40">{b.customer?.email}</p>
+                    <tr key={b._id} className={`hover:bg-slate-50/50 transition-all ${b.isFlagged ? 'bg-red-50/50' : 'bg-white'}`}>
+                      <td className="px-6 py-5">
+                        <p className="font-bold text-slate-900">{b.customer?.name}</p>
+                        <p className="text-xs text-slate-500 font-medium">{b.customer?.email}</p>
                       </td>
-                      <td className="px-6 py-4">
-                        <p className="font-medium max-w-[200px] truncate">{b.parkingSpace?.title}</p>
-                        <p className="text-xs text-white/40 flex items-center gap-1 truncate"><MapPin className="w-3 h-3" /> {b.parkingSpace?.address}</p>
+                      <td className="px-6 py-5">
+                        <p className="font-bold text-slate-800 max-w-[200px] truncate tracking-tight">{b.parkingSpace?.title}</p>
+                        <p className="text-[11px] text-slate-400 font-medium flex items-center gap-1 truncate"><MapPin className="w-3 h-3 text-indigo-500" /> {b.parkingSpace?.address}</p>
                       </td>
-                      <td className="px-6 py-4">
-                        <p className="flex items-center gap-1.5"><Calendar className="w-3 h-3 text-white/30" /> {format(new Date(b.startTime), 'dd MMM')}</p>
-                        <p className="text-xs text-white/40">{format(new Date(b.startTime), 'hh:mm a')} - {format(new Date(b.endTime), 'hh:mm a')}</p>
+                      <td className="px-6 py-5">
+                        <p className="flex items-center gap-1.5 font-bold text-slate-800"><Calendar className="w-3.5 h-3.5 text-indigo-500" /> {format(new Date(b.startTime), 'dd MMM, yyyy')}</p>
+                        <p className="text-[11px] text-slate-400 font-black uppercase tracking-widest mt-0.5">{format(new Date(b.startTime), 'hh:mm a')} - {format(new Date(b.endTime), 'hh:mm a')}</p>
                       </td>
-                      <td className="px-6 py-4 font-bold text-accent-green">₹{b.totalAmount}</td>
-                      <td className="px-6 py-4"><span className={`badge ${b.status === 'completed' ? 'badge-blue' : b.status === 'confirmed' ? 'badge-green' : b.status === 'pending' ? 'badge-yellow' : 'badge-gray'}`}>{b.status}</span></td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5 font-black text-emerald-600 text-lg tracking-tighter">₹{b.totalAmount}</td>
+                      <td className="px-6 py-5"><span className={`badge ${b.status === 'completed' ? 'badge-blue' : b.status === 'confirmed' ? 'badge-green' : b.status === 'pending' ? 'badge-yellow' : 'badge-gray'} shadow-sm`}>{b.status}</span></td>
+                      <td className="px-6 py-5">
                         {b.isFlagged ? (
-                          <div className="flex flex-col gap-1">
-                            <span className="badge-red font-black text-[10px] w-fit">FLAGGED</span>
-                            <p className="text-[10px] text-red-400/70 max-w-[120px] leading-tight">{b.flagReason}</p>
+                          <div className="flex flex-col gap-1.5">
+                            <span className="bg-red-600 text-white font-black text-[9px] px-2 py-0.5 rounded-full tracking-widest w-fit shadow-md shadow-red-100">FLAGGED</span>
+                            <p className="text-[10px] text-red-600 font-bold max-w-[140px] leading-tight italic">"{b.flagReason}"</p>
                           </div>
                         ) : (
-                          <span className="text-xs text-white/20 italic">No threats</span>
+                          <span className="text-[10px] text-slate-300 font-black uppercase tracking-widest">Clear</span>
                         )}
                       </td>
                     </tr>
