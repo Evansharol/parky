@@ -1,18 +1,19 @@
-/**
- * pages/customer/HomePage.jsx – Landing page with hero, smart search, and featured listings
- */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Car, Bike, Star, Shield, Zap, TrendingUp, Navigation } from 'lucide-react';
+import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
 import { getSpaces, smartSearch } from '../../api/index';
 import ParkingCard from '../../components/ParkingCard';
 import NearbyMapModal from '../../components/NearbyMapModal';
+import config from '../../config';
 import logo from '../../assets/logoparky.png';
 import park1 from '../../assets/park1.jpg';
 import park2 from '../../assets/park2.jpg';
 import park3 from '../../assets/park3.jpg';
 import park4 from '../../assets/park4.png';
 import toast from 'react-hot-toast';
+
+const LIBRARIES = ['places'];
 
 const STATS = [
   { label: 'Parking Spaces', value: '2,400+', icon: MapPin, color: 'bg-indigo-50 text-indigo-600 border border-indigo-100' },
@@ -30,6 +31,32 @@ const FEATURES = [
 
 const FEATURED_IMAGES = [park1, park2, park3, park4];
 
+function GoogleAutocomplete({ query, setFilters, onPlaceChanged, autocompleteRef }) {
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: config.GOOGLE_MAPS_API_KEY,
+    libraries: LIBRARIES,
+  });
+
+  if (!isLoaded) return <input className="flex-1 bg-transparent text-slate-900 placeholder-slate-400 outline-none text-base font-bold" placeholder="Loading search..." disabled />;
+
+  return (
+    <Autocomplete
+      onLoad={ref => autocompleteRef.current = ref}
+      onPlaceChanged={onPlaceChanged}
+      className="flex-1"
+    >
+      <input
+        type="text"
+        className="w-full bg-transparent text-slate-900 placeholder-slate-400 outline-none text-base font-bold"
+        placeholder='Try "Bangalore" or "cheap parking"...'
+        value={query}
+        onChange={(e) => setFilters(e.target.value)}
+      />
+    </Autocomplete>
+  );
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
@@ -38,6 +65,10 @@ export default function HomePage() {
   const [showMap, setShowMap] = useState(false);
   const [calcSlots, setCalcSlots] = useState(5);
   const [calcHours, setCalcHours] = useState(8);
+  const autocompleteRef = useRef(null);
+
+  const hasGoogleKey = config.GOOGLE_MAPS_API_KEY && config.GOOGLE_MAPS_API_KEY !== 'your_key_here' && config.GOOGLE_MAPS_API_KEY.length > 5;
+
   const earnings = calcSlots * calcHours * 40 * 30; // 40 is avg price, 30 days
 
   useEffect(() => {
@@ -108,11 +139,23 @@ export default function HomePage() {
     };
   }, []);
 
+  const onPlaceChanged = () => {
+    if (autocompleteRef.current !== null) {
+      const place = autocompleteRef.current.getPlace();
+      if (place.geometry) {
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        navigate(`/search?lat=${lat}&lng=${lng}&q=${encodeURIComponent(place.formatted_address)}`);
+      } else {
+        setQuery(place.name);
+      }
+    }
+  };
+
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!query.trim()) { navigate('/search'); return; }
     try {
-      // AI smart search – parse query to filters
       const res = await smartSearch(query);
       const filters = res.data.filters || {};
       const params = new URLSearchParams(filters).toString();
@@ -124,19 +167,13 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
-      {/* Nearby map modal */}
       {showMap && <NearbyMapModal onClose={() => setShowMap(false)} />}
-      {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
-        {/* Animated background */}
-        <div className="absolute inset-0">
+                <div className="absolute inset-0">
           <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-indigo-50 to-transparent" />
         </div>
-
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
-
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white border border-slate-200 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-wider text-indigo-600 mb-8 uppercase animate-subtle-fade shadow-sm">
+                    <div className="inline-flex items-center gap-2 bg-white border border-slate-200 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-wider text-indigo-600 mb-8 uppercase animate-subtle-fade shadow-sm">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             Now live in 35+ cities across India
           </div>
@@ -148,19 +185,26 @@ export default function HomePage() {
           <p className="text-xl text-slate-500 mb-12 max-w-2xl mx-auto leading-relaxed animate-slide-in font-medium" style={{ animationDelay: '0.1s' }}>
             Airbnb for parking spaces. Find, book, and pay for private and public parking in seconds — or earn money by renting yours.
           </p>
-
-          {/* Smart search bar */}
+          
           <form onSubmit={handleSearch} className="animate-slide-in" style={{ animationDelay: '0.2s' }}>
             <div className="flex items-center gap-3 bg-white border border-slate-200 shadow-xl px-5 py-3 rounded-2xl max-w-2xl mx-auto focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
               <Search className="w-5 h-5 text-slate-400 flex-shrink-0" />
-              <input
-                type="text"
-                className="flex-1 bg-transparent text-slate-900 placeholder-slate-400 outline-none text-base font-bold"
-                placeholder='Try "cheap bike parking near mall"...'
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-              />
-              {/* Near Me button */}
+              {hasGoogleKey ? (
+                <GoogleAutocomplete 
+                  query={query} 
+                  setFilters={setQuery} 
+                  onPlaceChanged={onPlaceChanged} 
+                  autocompleteRef={autocompleteRef} 
+                />
+              ) : (
+                <input
+                  type="text"
+                  className="flex-1 bg-transparent text-slate-900 placeholder-slate-400 outline-none text-base font-bold"
+                  placeholder='Try "Bangalore" or "cheap parking"...'
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                />
+              )}
               <button
                 type="button"
                 onClick={() => setShowMap(true)}
@@ -175,7 +219,6 @@ export default function HomePage() {
               </button>
             </div>
           </form>
-
           {/* Quick vehicle filters */}
           <div className="flex flex-wrap items-center justify-center gap-4 mt-8 animate-slide-in" style={{ animationDelay: '0.3s' }}>
             <button
@@ -198,8 +241,8 @@ export default function HomePage() {
               Find EV Charging
             </button>
           </div>
-
         </div>
+
 
         {/* Floating card decorations */}
         <div className="hidden lg:block absolute left-12 top-1/3 animate-float">

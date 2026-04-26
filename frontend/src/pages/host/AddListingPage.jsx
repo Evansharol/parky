@@ -1,14 +1,37 @@
 /**
  * pages/host/AddListingPage.jsx – Multi-step form for hosts to add a parking space
  */
-import { useState } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
 import { MapPin, IndianRupee, Clock, Car, Bike, Upload, Save, X } from 'lucide-react';
+import { GoogleMap, useJsApiLoader, Marker as GoogleMarker, Autocomplete } from '@react-google-maps/api';
+import { MapContainer, TileLayer, Marker as LeafletMarker, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 import { createSpace, uploadImages, suggestPrice } from '../../api/index';
+import config from '../../config';
 import toast from 'react-hot-toast';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const LIBRARIES = ['places'];
+
+const containerStyle = {
+  width: '100%',
+  height: '300px',
+  borderRadius: '1.5rem',
+  marginTop: '1rem',
+};
+
+const defaultCenter = { lat: 12.9716, lng: 77.5946 }; // Bangalore
+
+// Helper component to pan Leaflet map
+function ChangeView({ center }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center) map.setView([center.lat, center.lng], 15);
+  }, [center, map]);
+  return null;
+}
 
 export default function AddListingPage() {
   const navigate = useNavigate();
@@ -16,18 +39,57 @@ export default function AddListingPage() {
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [pricingSuggestion, setPricingSuggestion] = useState(null);
+  const autocompleteRef = useRef(null);
+  const mapRef = useRef(null);
+
+  const hasGoogleKey = config.GOOGLE_MAPS_API_KEY && config.GOOGLE_MAPS_API_KEY !== 'your_key_here';
+
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: config.GOOGLE_MAPS_API_KEY,
+    libraries: LIBRARIES,
+  });
 
   const [form, setForm] = useState({
     title: '',
     description: '',
     address: '',
-    lat: 12.9716, // Default to Bangalore center
+    lat: 12.9716, 
     lng: 77.5946,
     pricePerHour: '',
     vehicleTypes: ['car'],
     totalSlots: 1,
     timeSlots: DAYS.map(day => ({ day, open: '08:00', close: '20:00' })),
   });
+
+  const onMapLoad = useCallback((map) => {
+    mapRef.current = map;
+  }, []);
+
+  const onMapClick = useCallback((e) => {
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+    setForm(prev => ({ ...prev, lat, lng }));
+  }, []);
+
+  const onPlaceChanged = () => {
+    if (autocompleteRef.current !== null) {
+      const place = autocompleteRef.current.getPlace();
+      if (place.geometry) {
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        setForm(prev => ({
+          ...prev,
+          address: place.formatted_address,
+          lat,
+          lng
+        }));
+        if (mapRef.current) {
+          mapRef.current.panTo({ lat, lng });
+        }
+      }
+    }
+  };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -117,19 +179,69 @@ export default function AddListingPage() {
               <div className="grid gap-5">
                 <div>
                   <label className="input-label text-slate-500 font-bold uppercase tracking-widest text-[10px]">Full Address</label>
-                  <input className="input" placeholder="House no, Street, Area, City"
-                    value={form.address} onChange={e => setForm({...form, address: e.target.value})} required />
+                  {isLoaded && hasGoogleKey ? (
+                    <Autocomplete
+                      onLoad={ref => autocompleteRef.current = ref}
+                      onPlaceChanged={onPlaceChanged}
+                    >
+                      <input className="input" placeholder="Start typing your address..."
+                        value={form.address} onChange={e => setForm({...form, address: e.target.value})} required />
+                    </Autocomplete>
+                  ) : (
+                    <input className="input" placeholder="Enter full address..."
+                      value={form.address} onChange={e => setForm({...form, address: e.target.value})} required />
+                  )}
                 </div>
-                <div className="grid grid-cols-2 gap-5">
+
+                <div className="mt-2">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Adjust Location Precisely on Map</p>
+                  {hasGoogleKey && isLoaded ? (
+                    <GoogleMap
+                      mapContainerStyle={containerStyle}
+                      center={{ lat: form.lat, lng: form.lng }}
+                      zoom={15}
+                      onLoad={onMapLoad}
+                      onClick={onMapClick}
+                      options={{
+                        disableDefaultUI: true,
+                        zoomControl: true,
+                      }}
+                    >
+                      <GoogleMarker
+                        position={{ lat: form.lat, lng: form.lng }}
+                        draggable={true}
+                        onDragEnd={onMapClick}
+                      />
+                    </GoogleMap>
+                  ) : (
+                    <div className="h-[300px] border border-slate-200 rounded-3xl overflow-hidden relative">
+                      <MapContainer center={[form.lat, form.lng]} zoom={15} style={{ height: '100%', width: '100%' }}>
+                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                        <ChangeView center={{ lat: form.lat, lng: form.lng }} />
+                        <LeafletMarker 
+                          position={[form.lat, form.lng]} 
+                          draggable={true}
+                          eventHandlers={{
+                            dragend: (e) => {
+                              const marker = e.target;
+                              const position = marker.getLatLng();
+                              setForm(prev => ({ ...prev, lat: position.lat, lng: position.lng }));
+                            },
+                          }}
+                        />
+                      </MapContainer>
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-5 mt-2">
                   <div>
                     <label className="input-label text-slate-500 font-bold uppercase tracking-widest text-[10px]">Latitude</label>
-                    <input className="input" type="number" step="any" value={form.lat} 
-                      onChange={e => setForm({...form, lat: parseFloat(e.target.value)})} required />
+                    <input className="input bg-slate-50" type="number" step="any" value={form.lat} readOnly />
                   </div>
                   <div>
                     <label className="input-label text-slate-500 font-bold uppercase tracking-widest text-[10px]">Longitude</label>
-                    <input className="input" type="number" step="any" value={form.lng}
-                      onChange={e => setForm({...form, lng: parseFloat(e.target.value)})} required />
+                    <input className="input bg-slate-50" type="number" step="any" value={form.lng} readOnly />
                   </div>
                 </div>
               </div>

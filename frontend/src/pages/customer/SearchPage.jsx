@@ -1,19 +1,49 @@
 /**
  * pages/customer/SearchPage.jsx – Map + listing grid with filters sidebar
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, MapPin, Car, Bike, X, Filter, BatteryCharging } from 'lucide-react';
+import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
 import { getSpaces } from '../../api/index';
 import ParkingCard from '../../components/ParkingCard';
+import config from '../../config';
+
+const LIBRARIES = ['places'];
+
+function GoogleSearchInput({ value, onChange, onPlaceChanged, autocompleteRef }) {
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: config.GOOGLE_MAPS_API_KEY,
+    libraries: LIBRARIES,
+  });
+
+  if (!isLoaded) return <input className="input pl-9 text-sm" placeholder="Loading search..." disabled />;
+
+  return (
+    <Autocomplete
+      onLoad={ref => autocompleteRef.current = ref}
+      onPlaceChanged={onPlaceChanged}
+    >
+      <input
+        className="input pl-9 text-sm"
+        placeholder="Area, landmark…"
+        value={value}
+        onChange={onChange}
+      />
+    </Autocomplete>
+  );
+}
 
 export default function SearchPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [spaces, setSpaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState({
     search: searchParams.get('q') || '',
+    lat: searchParams.get('lat') || '',
+    lng: searchParams.get('lng') || '',
     vehicleType: searchParams.get('vehicleType') || '',
     minPrice: '',
     maxPrice: '',
@@ -21,15 +51,23 @@ export default function SearchPage() {
     isEVCharging: false,
   });
 
+  const autocompleteRef = useRef(null);
+  const hasGoogleKey = config.GOOGLE_MAPS_API_KEY && config.GOOGLE_MAPS_API_KEY !== 'your_key_here' && config.GOOGLE_MAPS_API_KEY.length > 5;
+
   const fetchSpaces = useCallback(async () => {
     setLoading(true);
     try {
       const params = {};
       if (filters.search)      params.search = filters.search;
+      if (filters.lat)         params.lat = filters.lat;
+      if (filters.lng)         params.lng = filters.lng;
+      if (filters.lat && filters.lng) params.radius = 10; // Default radius for geo search
+      
       if (filters.vehicleType) params.vehicleType = filters.vehicleType;
       if (filters.minPrice)    params.minPrice = filters.minPrice;
       if (filters.maxPrice)    params.maxPrice = filters.maxPrice;
       if (filters.isEVCharging) params.isEVCharging = true;
+      
       const res = await getSpaces(params);
       let data = res.data.spaces || [];
       if (filters.sort === 'price_asc')  data = [...data].sort((a, b) => a.pricePerHour - b.pricePerHour);
@@ -42,7 +80,27 @@ export default function SearchPage() {
 
   useEffect(() => { fetchSpaces(); }, [fetchSpaces]);
 
-  const clearFilters = () => setFilters({ search: '', vehicleType: '', minPrice: '', maxPrice: '', sort: '' });
+  const onPlaceChanged = () => {
+    if (autocompleteRef.current !== null) {
+      const place = autocompleteRef.current.getPlace();
+      if (place.geometry) {
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        setFilters({ ...filters, search: place.formatted_address, lat, lng });
+        
+        // Update URL
+        setSearchParams({ q: place.formatted_address, lat, lng });
+      } else {
+        setFilters({ ...filters, search: place.name, lat: '', lng: '' });
+      }
+    }
+  };
+
+  const clearFilters = () => {
+    setFilters({ search: '', lat: '', lng: '', vehicleType: '', minPrice: '', maxPrice: '', sort: '' });
+    setSearchParams({});
+  };
+
   const activeCount = [filters.vehicleType, filters.minPrice, filters.maxPrice, filters.sort].filter(Boolean).length;
 
   return (
@@ -69,9 +127,18 @@ export default function SearchPage() {
             <div className="mb-4">
               <label className="input-label">Search</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input className="input pl-9 text-sm" placeholder="Area, landmark…"
-                  value={filters.search} onChange={e => setFilters({ ...filters, search: e.target.value })} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 z-10" />
+                {hasGoogleKey ? (
+                  <GoogleSearchInput 
+                    value={filters.search} 
+                    onChange={e => setFilters({ ...filters, search: e.target.value, lat: '', lng: '' })} 
+                    onPlaceChanged={onPlaceChanged} 
+                    autocompleteRef={autocompleteRef} 
+                  />
+                ) : (
+                  <input className="input pl-9 text-sm" placeholder="Area, landmark…"
+                    value={filters.search} onChange={e => setFilters({ ...filters, search: e.target.value, lat: '', lng: '' })} />
+                )}
               </div>
             </div>
             <div className="mb-4">
@@ -102,6 +169,7 @@ export default function SearchPage() {
                 <option value="">Newest First</option>
                 <option value="price_asc">Price: Low → High</option>
                 <option value="price_desc">Price: High → Low</option>
+                <option value="rating">Top Rated</option>
               </select>
             </div>
             <div className="mt-4">
